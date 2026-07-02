@@ -89,7 +89,7 @@ namespace CodePulse.API.Controllers
                     {
                         HttpOnly = true,
                         Secure = true,
-                        SameSite = SameSiteMode.Lax,
+                        SameSite = SameSiteMode.None,
                         Expires = DateTime.UtcNow.AddMinutes(15)
                     });
                     return Ok(response);
@@ -123,7 +123,7 @@ namespace CodePulse.API.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Lax,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(-1)
             });
             return Ok();
