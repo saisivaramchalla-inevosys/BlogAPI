@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "stepStartCounts": {
+    "phase-1:step-3": 1
+  },
+  "blockRetries": {},
+  "lastBlockHashes": {},
+  "stepCompleteAttempts": {
+    "phase-1:step-1": 1
+  },
+  "phaseStartRefs": {
+    "phase-1": "000720f5456e6176ddf8dfc1f214400b57aee7aa"
+  },
+  "stepStartRefs": {
+    "phase-1:step-1": "000720f5456e6176ddf8dfc1f214400b57aee7aa",
+    "phase-1:step-3": "000720f5456e6176ddf8dfc1f214400b57aee7aa"
+  }
+}

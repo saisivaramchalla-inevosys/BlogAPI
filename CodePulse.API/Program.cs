@@ -1,10 +1,10 @@
 using CodePulse.API.Data;
+using CodePulse.API.Models.DTO;
 using CodePulse.API.Repositories.Implementation;
 using CodePulse.API.Repositories.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 var builder = WebApplication.CreateBuilder(args);
@@ -17,12 +17,14 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CodePulseConnectionString"))
+    options.UseNpgsql(builder.Configuration.GetConnectionString("CodePulseConnectionString"))
 );
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CodePulseConnectionString"))
+    options.UseNpgsql(builder.Configuration.GetConnectionString("CodePulseConnectionString"))
 );
+
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IBlogPostRepository, BlogPostRepository>();
@@ -83,24 +85,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+var allowedOrigin = builder.Configuration["Cors:AllowedOrigin"] ?? "https://localhost:4200";
 
 app.UseCors(options =>
 {
     options.AllowAnyHeader();
-    options.WithOrigins("https://localhost:4200");
+    options.WithOrigins(allowedOrigin);
     options.AllowAnyMethod();
     options.AllowCredentials();
 });
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider=new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(),"Images")),
-    RequestPath="/Images"
-});
 
 app.MapControllers();
 

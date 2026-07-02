@@ -1,0 +1,174 @@
+{
+  "id": "019f2236-a3a2-72d9-a5c7-d2dd3541f55f",
+  "name": "Free deploy ASP.NET Core API",
+  "description": "I want to deploy this ASP.NET Core 8 WebAPI that stores images and uses MySQL Server freely without any need for a credit card, completely free. Azure is not an option as I'm teaching students and they do not have free credits, so Render, Cloudinary or Cloudflare R2, Neon.tech or others that are completely free are candidates. I want a list of changes to make, the files where the changes should be made, and recommendations on which free services to use for easy deployment of this API.",
+  "status": "paused",
+  "worktree": {
+    "path": "/mnt/c/Users/lee/Downloads/CodePulse/API/CodePulse.API",
+    "branch": "main",
+    "commit": "000720f5456e6176ddf8dfc1f214400b57aee7aa"
+  },
+  "scoping": {
+    "goal": {
+      "answer": "Adapt the ASP.NET Core 8 Web API from local SQL Server + disk image storage to a completely free, no-credit-card cloud stack (Neon PostgreSQL, Cloudinary, Render), and deliver a file-by-file change list plus deployment instructions.",
+      "confirmedAt": "2026-07-02T09:52:43.447Z"
+    },
+    "criteria": {
+      "answer": "Database provider switched to PostgreSQL: replace Microsoft.EntityFrameworkCore.SqlServer with Npgsql.EntityFrameworkCore.PostgreSQL and regenerate EF Core migrations for Neon free tier. Verify via `dotnet build` and a PostgreSQL migration script.\nImage storage moved to Cloudinary: update IImageRepository/ImageRepository to upload via the Cloudinary .NET SDK, persist only the returned URL, and remove UseStaticFiles for the Images folder. Verify by manual upload returning a Cloudinary URL.\nConfiguration externalized for production: connection string, JWT key, Cloudinary credentials, and CORS origin read from environment variables/Render env vars; no secrets in appsettings.Production.json. Verify via grep and app startup with env vars only.\nDeployment artifacts added: Dockerfile and render.yaml for Render free Web Service, plus updated Program.cs CORS origin for deployed frontend URL. Verify via `docker build` and YAML/render config check.\nStep-by-step change list document delivered, listing every file touched, what changed, and free-service signup details. Verify by file existence and content check.",
+      "confirmedAt": "2026-07-02T09:52:43.447Z"
+    },
+    "constraints": {
+      "answer": "No paid services or credit card required for deployment., Preserve existing domain models, controllers, and auth behavior., Target ASP.NET Core 8 / .NET 8., Do not commit production secrets into the repository., Accept Render free-tier limitations: instance sleeps after inactivity and has no persistent local disk.",
+      "confirmedAt": "2026-07-02T09:52:43.447Z"
+    },
+    "phases": {
+      "answer": "Adapt API and add deployment artifacts",
+      "confirmedAt": "2026-07-02T09:52:43.447Z"
+    },
+    "assumptions": {
+      "answer": "User accepts PostgreSQL (Neon free tier) instead of MySQL for the production database.; Cloudinary free tier is acceptable for image hosting.; Students will create free accounts on Neon, Cloudinary, and Render.; Existing SQL Server migrations/data can be discarded and regenerated from scratch for PostgreSQL.; Frontend deployed URL will be supplied as an environment variable.; Free-tier cold starts and storage limits are acceptable for teaching/student workloads.",
+      "confirmedAt": "2026-07-02T09:52:43.447Z"
+    }
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "index": 1,
+      "name": "Adapt API and add deployment artifacts",
+      "goal": "Replace SQL Server with PostgreSQL, move image storage to Cloudinary, externalize secrets, add Docker/Render deployment files, and document every change.",
+      "description": "",
+      "parallel": false,
+      "status": "active",
+      "steps": [
+        {
+          "id": "step-1",
+          "index": 1,
+          "description": "Update CodePulse.API.csproj: remove Microsoft.EntityFrameworkCore.SqlServer, add Npgsql.EntityFrameworkCore.PostgreSQL and CloudinaryDotNet.",
+          "status": "verified",
+          "verification": {
+            "command": "dotnet restore CodePulse.API/CodePulse.API.csproj exits 0",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-07-02T09:53:17.513Z",
+          "completedAt": "2026-07-02T09:57:05.896Z",
+          "result": {
+            "success": true,
+            "exitCode": 0,
+            "stdout": "",
+            "stderr": "",
+            "completedAt": "2026-07-02T09:57:05.896Z"
+          }
+        },
+        {
+          "id": "step-2",
+          "index": 2,
+          "description": "Delete old SQL Server migrations and regenerate EF Core migrations for PostgreSQL for both ApplicationDb and AuthDb.",
+          "status": "pending",
+          "verification": {
+            "command": "dotnet ef migrations add InitialPostgres -c ApplicationDbContext -o Migrations && dotnet ef migrations add InitialAuthPostgres -c AuthDbContext -o Migrations/AuthDb exit 0",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false
+        },
+        {
+          "id": "step-3",
+          "index": 3,
+          "description": "Update Program.cs: call UseNpgsql for both contexts, read ConnectionStrings:CodePulseConnectionString from env, read Jwt:Key/Issuer/Audience and Cloudinary settings from env, make CORS origin configurable, and remove UseStaticFiles for the Images folder.",
+          "status": "pending",
+          "verification": {
+            "command": "grep -q 'UseNpgsql' CodePulse.API/Program.cs && grep -q 'UseStaticFiles' CodePulse.API/Program.cs && echo pass (or grep confirms static files mapping removed)",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false,
+          "startedAt": "2026-07-02T09:58:14.824Z"
+        },
+        {
+          "id": "step-4",
+          "index": 4,
+          "description": "Add Cloudinary configuration/options and update IImageRepository/ImageRepository to upload IFormFile to Cloudinary, store the returned secure URL, and skip local disk writes.",
+          "status": "pending",
+          "verification": {
+            "command": "dotnet build CodePulse.API/CodePulse.API.csproj exits 0",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false
+        },
+        {
+          "id": "step-5",
+          "index": 5,
+          "description": "Externalize production configuration: keep appsettings.json for non-secret defaults, use appsettings.Production.json only for env-var-driven values, and ensure no secrets are hardcoded.",
+          "status": "pending",
+          "verification": {
+            "command": "grep -E '(Password|Key|Secret|ConnectionString)' CodePulse.API/appsettings.Production.json returns no matches",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false
+        },
+        {
+          "id": "step-6",
+          "index": 6,
+          "description": "Add a multi-stage Dockerfile for Render based on mcr.microsoft.com/dotnet/aspnet:8.0 and sdk:8.0.",
+          "status": "pending",
+          "verification": {
+            "command": "docker build -t codepulse-api CodePulse.API exits 0",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false
+        },
+        {
+          "id": "step-7",
+          "index": 7,
+          "description": "Add render.yaml Blueprint defining a free Render Web Service with required environment variables.",
+          "status": "pending",
+          "verification": {
+            "command": "render config check render.yaml exits 0 (or yamllint passes if render CLI unavailable)",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false
+        },
+        {
+          "id": "step-8",
+          "index": 8,
+          "description": "Write DEPLOYMENT.md guide listing every changed file, what changed, required env vars, and signup steps for Neon, Cloudinary, and Render.",
+          "status": "pending",
+          "verification": {
+            "command": "test -f DEPLOYMENT.md && grep -q 'CodePulse.API.csproj' DEPLOYMENT.md",
+            "retries": 2,
+            "retryDelayMs": 1000
+          },
+          "parallel": false
+        }
+      ],
+      "startedAt": "2026-07-02T09:52:49.525Z"
+    }
+  ],
+  "decisions": [],
+  "memories": [],
+  "createdAt": "2026-07-02T09:43:54.017Z",
+  "updatedAt": "2026-07-02T10:08:59.842Z",
+  "goal": "Adapt the ASP.NET Core 8 Web API from local SQL Server + disk image storage to a completely free, no-credit-card cloud stack (Neon PostgreSQL, Cloudinary, Render), and deliver a file-by-file change list plus deployment instructions.",
+  "successCriteria": [
+    "Database provider switched to PostgreSQL: replace Microsoft.EntityFrameworkCore.SqlServer with Npgsql.EntityFrameworkCore.PostgreSQL and regenerate EF Core migrations for Neon free tier. Verify via `dotnet build` and a PostgreSQL migration script.",
+    "Image storage moved to Cloudinary: update IImageRepository/ImageRepository to upload via the Cloudinary .NET SDK, persist only the returned URL, and remove UseStaticFiles for the Images folder. Verify by manual upload returning a Cloudinary URL.",
+    "Configuration externalized for production: connection string, JWT key, Cloudinary credentials, and CORS origin read from environment variables/Render env vars; no secrets in appsettings.Production.json. Verify via grep and app startup with env vars only.",
+    "Deployment artifacts added: Dockerfile and render.yaml for Render free Web Service, plus updated Program.cs CORS origin for deployed frontend URL. Verify via `docker build` and YAML/render config check.",
+    "Step-by-step change list document delivered, listing every file touched, what changed, and free-service signup details. Verify by file existence and content check."
+  ],
+  "constraints": [
+    "No paid services or credit card required for deployment.",
+    "Preserve existing domain models, controllers, and auth behavior.",
+    "Target ASP.NET Core 8 / .NET 8.",
+    "Do not commit production secrets into the repository.",
+    "Accept Render free-tier limitations: instance sleeps after inactivity and has no persistent local disk."
+  ],
+  "lastActiveAt": "2026-07-02T09:52:49.525Z",
+  "activePhaseId": "phase-1"
+}

@@ -1,20 +1,23 @@
-﻿using CodePulse.API.Data;
+﻿using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using CodePulse.API.Data;
 using CodePulse.API.Models.Domain;
+using CodePulse.API.Models.DTO;
 using CodePulse.API.Repositories.Interface;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace CodePulse.API.Repositories.Implementation
 {
     public class ImageRepository : IImageRepository
     {
-        private readonly IWebHostEnvironment webHostEnvironment;
-        private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly Cloudinary cloudinary;
         private readonly ApplicationDbContext dbContext;
 
-        public ImageRepository(IWebHostEnvironment webHostEnvironment,IHttpContextAccessor httpContextAccessor, ApplicationDbContext dbContext)
+        public ImageRepository(IOptions<CloudinarySettings> cloudinaryOptions, ApplicationDbContext dbContext)
         {
-            this.webHostEnvironment = webHostEnvironment;
-            this.httpContextAccessor = httpContextAccessor;
+            var settings = cloudinaryOptions.Value;
+            this.cloudinary = new Cloudinary(new Account(settings.CloudName, settings.ApiKey, settings.ApiSecret));
             this.dbContext = dbContext;
         }
 
@@ -25,14 +28,23 @@ namespace CodePulse.API.Repositories.Implementation
 
         public async Task<BlogImage> Upload(IFormFile file, BlogImage blogImage)
         {
-            var localPath = Path.Combine(webHostEnvironment.ContentRootPath, "Images", $"{blogImage.FileName}{blogImage.FileExtension}");
-            using var stream = new FileStream(localPath, FileMode.Create);
-            await file.CopyToAsync(stream);
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription($"{blogImage.FileName}{blogImage.FileExtension}", stream),
+                PublicId = $"{blogImage.FileName}-{Guid.NewGuid()}",
+                Overwrite = false
+            };
 
-            var httpRequest = httpContextAccessor.HttpContext.Request;
-            var urlPath = $"{httpRequest.Scheme}://{httpRequest.Host}{httpRequest.PathBase}/Images/{blogImage.FileName}{blogImage.FileExtension}";
-            blogImage.Url = urlPath;
-            
+            var uploadResult = await cloudinary.UploadAsync(uploadParams);
+
+            if (uploadResult.Error != null)
+            {
+                throw new InvalidOperationException($"Cloudinary upload failed: {uploadResult.Error.Message}");
+            }
+
+            blogImage.Url = uploadResult.SecureUrl.AbsoluteUri;
+
             await dbContext.BlogImages.AddAsync(blogImage);
             await dbContext.SaveChangesAsync();
 
