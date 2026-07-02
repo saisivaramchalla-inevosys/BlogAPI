@@ -90,6 +90,7 @@ namespace CodePulse.API.Controllers
                         HttpOnly = true,
                         Secure = true,
                         SameSite = SameSiteMode.None,
+                        Partitioned = true,
                         Expires = DateTime.UtcNow.AddMinutes(15)
                     });
                     return Ok(response);
@@ -124,6 +125,7 @@ namespace CodePulse.API.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
+                Partitioned = true,
                 Expires = DateTime.UtcNow.AddDays(-1)
             });
             return Ok();
